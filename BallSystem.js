@@ -8,27 +8,47 @@ function BallSystem() {
     this.predictCollisions = function(ball) {
         if (ball == null) return;
 
-        var _this = this;
+        var _this = this,
+        eventMinPQ = new MinPQ();
 
         var verticalEvent = new Event(_this.currentTime + ball.timeToHitVerticalWall(), ball, null);
         var horizonEvent = new Event(_this.currentTime + ball.timeToHitHorizontalWall(), null, ball);
 
-        if (verticalEvent.time - _this.currentTime < 10000) _this.minPQ.insert(verticalEvent);
-        if (horizonEvent.time - _this.currentTime < 10000) _this.minPQ.insert(horizonEvent);
+        if (verticalEvent.time - _this.currentTime < 10000) {
+            //_this.minPQ.insert(verticalEvent);
+            eventMinPQ.insert(verticalEvent);
+        }
+        if (horizonEvent.time - _this.currentTime < 10000) {
+            //_this.minPQ.insert(horizonEvent)
+            eventMinPQ.insert(horizonEvent);
+        };
 
         _this.balls.filter(b => b !== ball).forEach(other => {
             var t = ball.timeToHit(other);
             if (t < 10000) {
-                _this.minPQ.insert(new Event(_this.currentTime + t, ball, other));
+                //_this.minPQ.insert(new Event(_this.currentTime + t, ball, other));
+                eventMinPQ.insert(new Event(_this.currentTime + t, ball, other));
             }
         });
+
+        if (!eventMinPQ.isEmpty()) {
+            var earliestEvent = eventMinPQ.removeMin();
+            earliestEvent.eventMinPQ = eventMinPQ;
+            _this.minPQ.insert(earliestEvent);
+        }
     }
 
     this.simulate = function() {
         //var startTime = new Date().getTime()/1000;
         var _this = this,
             executedEvent = _this.minPQ.removeMin();
-        if (!executedEvent.isValid()) return;
+        if (!executedEvent.isValid()) {
+            if (!executedEvent.eventMinPQ || executedEvent.eventMinPQ.isEmpty()) return;
+            var e = executedEvent.eventMinPQ.removeMin();
+            e.eventMinPQ = executedEvent.eventMinPQ;
+            _this.minPQ.insert(e);
+            return;
+        };
 
         _this.balls.forEach(ball => {
             //console.log(executedEvent.time + ' # ' + _this.currentTime);
@@ -45,11 +65,11 @@ function BallSystem() {
 
 
 
-            // var now = new Date().getTime() / 1000;
-            // var dur = now - PREVIOUS_TIME;
-            // console.log(' # ' + dur);
-            // //sleep(50 - dur);
-            // PREVIOUS_TIME = now;
+            var now = new Date().getTime() / 1000;
+            var dur = now - PREVIOUS_TIME;
+            console.log(' # ' + dur);
+            //sleep(50 - dur);
+            PREVIOUS_TIME = now;
         }
         else if (executedEvent.ballA != null && executedEvent.ballB == null) {
             executedEvent.ballA.bounceOffVerticalWall();
@@ -75,15 +95,15 @@ function BallSystem() {
 var ballSystem = new BallSystem();
 ballSystem.minPQ.insert(new Event(0, null, null));
 
-for (var i = 0; i < 20; i++) {
-    var radius = getRandomInt(2, 10);
+for (var i = 0; i < 100; i++) {
+    var radius = getRandomInt(3, 10);
     ballSystem.balls.push(
         new Ball(
             getRandomInt(50, width - 100),
             getRandomInt(50, height - 100),
             //getRandomInt(1, 1)/getRandomInt(2, 5),
             //getRandomInt(1, 1)/getRandomInt(2, 5),
-            getRandomInt(5, 100),
+            getRandomInt(5, 200),
             getRandomInt(5, 200),
             radius,
             getRandomColor(),
@@ -91,8 +111,16 @@ for (var i = 0; i < 20; i++) {
 }
 
 ballSystem.balls.push(
-    new Ball(200, 200, 1, 1, 50, "#0000ff", 1000),
-    new Ball(300, 300, 1, 1, 80, "#930505", 3000)
+//     new Ball(50, 200, 0, 0, 20, "#f441f1", 100), // pink
+//     new Ball(200, 200, -40, 0, 20, "#0000ff", 100), // xanh duong
+//     new Ball(100, 200, 40, 0, 20, "#930505", 1000), // red
+//     new Ball(100, 400, -100, 0, 20, "#f4e841", 100), // yellow
+//     new Ball(50, 100, 0, 1, 5, "#41f4eb", 100), // blue
+//     new Ball(60, 100, -10, 0, 5, "#0f0e0e", 100), // black
+//     new Ball(50, 500, 0, -50, 5, "#918e8e", 100), // grey
+//     new Ball(50, 400, 0, 0, 5, "#e27c00", 500) // orange
+
+     new Ball(200, 200, 5, 5, 100, "#930505", 5000)
 );
 
 ballSystem.balls.forEach(ball => ballSystem.predictCollisions(ball));
