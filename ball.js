@@ -1,5 +1,6 @@
 
-function Ball(x, y, vx, vy, radius, color, mass) {
+function Ball(x, y, vx, vy, radius, color, mass, id) {
+    this.id = id;
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -75,6 +76,21 @@ function Ball(x, y, vx, vy, radius, color, mass) {
         return Number.MAX_VALUE;
     }
 
+    this.timeToCrossVerticalBorder = function(cellWidth, cellHeight) {
+        var _this = this,
+        cellX = _this._calcCurrentCell(cellWidth, cellHeight).x;
+        if (_this.vx > 0) return ((cellX + cellWidth + 1) - _this.x) / _this.vx;
+        if (_this.vx < 0) return (_this.x - cellX + 1) / -_this.vx;
+    }
+
+    this.timeToCrossHorizontalBorder = function(cellWidth, cellHeight) {
+        var _this = this,
+        cellY = _this._calcCurrentCell(cellWidth, cellHeight).y;
+
+        if (_this.vy > 0) return (cellY + cellHeight + 1 - _this.y) / _this.vy;
+        if (_this.vy < 0) return (_this.y - cellY + 1) / -_this.vy;
+    }
+
     this.bounceOff = function(otherBall) {
         var _this = this,
             dx = otherBall.x - _this.x,
@@ -110,6 +126,17 @@ function Ball(x, y, vx, vy, radius, color, mass) {
     this._round = function(number) {
         //return Math.round(number * 100) / 100;
         return number;
+    }
+
+    this._calcCurrentCell = function(cellWidth, cellHeight) {
+        var cell = {
+            x: Math.floor(this.x/cellWidth)*cellWidth,
+            y: Math.floor(this.y/cellHeight)*cellHeight
+        };
+        return {
+            x: cell.x >= this._wallX ? cell.x - cellWidth : cell.x,
+            y: cell.y >= this._wallY ? cell.y - cellHeight : cell.y
+        };
     }
 }
 
